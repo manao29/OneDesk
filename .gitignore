@@ -1,0 +1,25 @@
+# macOS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Local application state and secrets
+.env
+.env.*
+!.env.example
+app/data/
+app/.env
+app/.env.*
+!app/.env.example
+
+# Generated dependencies and build output
+app/node_modules/
+app/dist/
+
+# Local design/audit evidence and source reference images
+app/audit/
+CleanShot 2026-07-09 at 10.17.55@2x.png
+
+# Logs and temporary files
+*.log
+*.tmp

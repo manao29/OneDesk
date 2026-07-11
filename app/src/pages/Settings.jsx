@@ -1,0 +1,15 @@
+import React, { useEffect, useState } from "react";
+import { api } from "../api.js";
+import { PageHead, useToast, Field } from "../components/common.jsx";
+
+export default function Settings() {
+  const [settings, setSettings] = useState(null);
+  const [form, setForm] = useState({ llm_base_url: "", llm_api_key: "", llm_model: "", clear_llm_api_key: false });
+  const [saving, setSaving] = useState(false);
+  const toast = useToast();
+  const load = () => api.get("/api/settings").then((s) => { setSettings(s); setForm({ llm_base_url: s.llm_base_url || "", llm_api_key: "", llm_model: s.llm_model || "", clear_llm_api_key: false }); }).catch((e) => toast.show(e.message));
+  useEffect(() => { load(); }, []);
+  async function save() { setSaving(true); try { const r = await api.post("/api/settings", form); toast.show(r.configured ? "LLM 配置已保存并启用" : "设置已保存；未配置完整时将继续使用演示模式"); load(); } catch (e) { toast.show(e.message); } finally { setSaving(false); } }
+  if (!settings) return <div className="py-20 text-center text-[#a39e92]">正在读取设置…</div>;
+  return <div><PageHead title="设置" sub="本地单用户运行。密钥只保存于这台电脑的 SQLite 数据库。" />{toast.node}<div className="grid grid-cols-5 gap-5"><section className="card col-span-3 px-6 py-5"><h2 className="font-title text-lg font-semibold">LLM 配置</h2><p className="text-xs text-[#a39e92] mt-1 mb-5">支持 OpenAI 兼容的 Chat Completions 接口。未配齐时，应用仍可用内置演示模板走通流程。</p><Field label="Base URL"><input className="input" value={form.llm_base_url} onChange={(e) => setForm({ ...form, llm_base_url: e.target.value })} placeholder="https://api.example.com/v1" /></Field><Field label="模型名称"><input className="input" value={form.llm_model} onChange={(e) => setForm({ ...form, llm_model: e.target.value })} placeholder="如：gpt-4.1-mini" /></Field><Field label={settings.llm_key_set ? "API Key（已保存；留空则不修改）" : "API Key"}><input className="input" type="password" value={form.llm_api_key} onChange={(e) => setForm({ ...form, llm_api_key: e.target.value })} placeholder={settings.llm_key_set ? "••••••••" : "输入后仅保存在本机"} /></Field>{settings.llm_key_set && <label className="flex gap-2 items-center text-xs text-[#6b675e] mb-4"><input type="checkbox" checked={form.clear_llm_api_key} onChange={(e) => setForm({ ...form, clear_llm_api_key: e.target.checked })} />清除已保存的 API Key，切回演示模式</label>}<div className="flex justify-end"><button className="btn btn-primary" disabled={saving} onClick={save}>{saving ? "保存中…" : "保存配置"}</button></div></section><aside className="card col-span-2 px-5 py-5 h-fit"><h2 className="font-title text-lg font-semibold">本地工作区</h2><dl className="mt-4 text-sm space-y-4"><div><dt className="text-xs text-[#a39e92]">CSV 导出目录</dt><dd className="mt-1 break-all text-[#6b675e]">{settings.workspace_dir}</dd></div><div><dt className="text-xs text-[#a39e92]">当前生成模式</dt><dd className="mt-1"><span className="tag">{settings.llm_key_set && settings.llm_base_url && settings.llm_model ? "LLM" : "演示模式"}</span></dd></div></dl><p className="text-xs leading-relaxed text-[#a39e92] mt-6 pt-4 border-t border-[#e3ddd1]">验证码、登录、发布、评论和私信均不由 OneDesk 自动执行。本阶段只保留本地导入、判断、审批和导出。</p></aside></div></div>;
+}
